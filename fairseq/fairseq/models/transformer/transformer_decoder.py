@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import numpy as np
 from typing import Any, Dict, List, Optional
 
 import torch
@@ -194,6 +195,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
         alignment_heads: Optional[int] = None,
         src_lengths: Optional[Any] = None,
         return_all_hiddens: bool = False,
+        simcut_p: Optional[float] = None,
     ):
         """
         Args:
@@ -221,6 +223,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
             full_context_alignment=full_context_alignment,
             alignment_layer=alignment_layer,
             alignment_heads=alignment_heads,
+            simcut_p=simcut_p,
         )
 
         if not features_only:
@@ -235,6 +238,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
         full_context_alignment: bool = False,
         alignment_layer: Optional[int] = None,
         alignment_heads: Optional[int] = None,
+        simcut_p: Optional[float] = None,
     ):
         return self.extract_features_scriptable(
             prev_output_tokens,
@@ -243,6 +247,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
             full_context_alignment,
             alignment_layer,
             alignment_heads,
+            simcut_p=simcut_p,
         )
 
     """
@@ -259,6 +264,7 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
         full_context_alignment: bool = False,
         alignment_layer: Optional[int] = None,
         alignment_heads: Optional[int] = None,
+        simcut_p: Optional[float] = None,
     ):
         """
         Similar to *forward* but only return features.
@@ -312,6 +318,11 @@ class TransformerDecoderBase(FairseqIncrementalDecoder):
 
         if self.project_in_dim is not None:
             x = self.project_in_dim(x)
+
+        if simcut_p is not None:
+            x_mask = x.new_tensor(np.random.rand(x.size(0), x.size(1)) < simcut_p)
+            x_mask[:, 0] = 1  # Do not mask bos token
+            x = torch.mul(x_mask.unsqueeze(-1), x)
 
         if positions is not None:
             x += positions

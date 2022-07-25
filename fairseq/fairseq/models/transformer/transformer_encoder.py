@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+import numpy as np
 from typing import Dict, List, Optional
 
 import torch
@@ -117,11 +118,17 @@ class TransformerEncoderBase(FairseqEncoder):
         return layer
 
     def forward_embedding(
-        self, src_tokens, token_embedding: Optional[torch.Tensor] = None
+        self, src_tokens, token_embedding: Optional[torch.Tensor] = None,
+        simcut_p: Optional[float] = None,
     ):
         # embed tokens and positions
         if token_embedding is None:
             token_embedding = self.embed_tokens(src_tokens)
+            if simcut_p is not None:
+                token_embedding_mask = token_embedding.new_tensor(
+                    np.random.rand(token_embedding.size(0), token_embedding.size(1)) < simcut_p)
+                token_embedding_mask[:, -1] = 1  # Do not mask bos token
+                token_embedding = torch.mul(token_embedding_mask.unsqueeze(-1), token_embedding)
         x = embed = self.embed_scale * token_embedding
         if self.embed_positions is not None:
             x = embed + self.embed_positions(src_tokens)
@@ -138,6 +145,7 @@ class TransformerEncoderBase(FairseqEncoder):
         src_lengths: Optional[torch.Tensor] = None,
         return_all_hiddens: bool = False,
         token_embeddings: Optional[torch.Tensor] = None,
+        simcut_p: Optional[float] = None,
     ):
         """
         Args:
@@ -163,7 +171,7 @@ class TransformerEncoderBase(FairseqEncoder):
                   Only populated if *return_all_hiddens* is True.
         """
         return self.forward_scriptable(
-            src_tokens, src_lengths, return_all_hiddens, token_embeddings
+            src_tokens, src_lengths, return_all_hiddens, token_embeddings, simcut_p=simcut_p
         )
 
     # TorchScript doesn't support super() method so that the scriptable Subclass
@@ -176,6 +184,7 @@ class TransformerEncoderBase(FairseqEncoder):
         src_lengths: Optional[torch.Tensor] = None,
         return_all_hiddens: bool = False,
         token_embeddings: Optional[torch.Tensor] = None,
+        simcut_p: Optional[float] = None,
     ):
         """
         Args:
@@ -204,7 +213,7 @@ class TransformerEncoderBase(FairseqEncoder):
         encoder_padding_mask = src_tokens.eq(self.padding_idx)
         has_pads = src_tokens.device.type == "xla" or encoder_padding_mask.any()
 
-        x, encoder_embedding = self.forward_embedding(src_tokens, token_embeddings)
+        x, encoder_embedding = self.forward_embedding(src_tokens, token_embeddings, simcut_p=simcut_p)
 
         # account for padding while computing the representation
         if has_pads:
