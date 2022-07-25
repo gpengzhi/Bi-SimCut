@@ -1,6 +1,6 @@
 # Bi-SimCut: A Simple Strategy for Boosting Neural Machine Translation
 
-This repository contains the PyTorch implementation for our NAACL 2022 main conference paper "[Bi-SimCut: A Simple Strategy for Boosting Neural Machine Translation](https://aclanthology.org/2022.naacl-main.289/)". Please check [here]() for the PaddlePaddle implementation for our work.
+This repository contains the PyTorch implementation (**Unofficial**) for our NAACL 2022 main conference paper "[Bi-SimCut: A Simple Strategy for Boosting Neural Machine Translation](https://aclanthology.org/2022.naacl-main.289/)". Please check [here]() for the PaddlePaddle implementation (**Official**) for our work.
 
 ## Requirements and Installation
 
@@ -19,9 +19,11 @@ pip install --editable ./
 # CFLAGS="-stdlib=libc++" pip install --editable ./
 ```
 
-## Bi-SimCut
+## Reproduction
 
 The following instructions can be used to train a Transformer model on the IWSLT'14 German to English dataset.
+
+### Preprocessing
 
 Download and preprocess the data:
 ```
@@ -29,7 +31,7 @@ Download and preprocess the data:
 bash prepare-iwslt14.sh
 
 # Preprocess/binarize the unidirectional data
-TEXT=./iwslt14.tokenized.de-en
+TEXT=iwslt14.tokenized.de-en
 fairseq-preprocess --source-lang de --target-lang en \
     --trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
     --destdir data-bin/iwslt14.tokenized.de-en \
@@ -46,14 +48,16 @@ cat test.de test.en > test.tgt
 cd ..
 
 # Preprocess/binarize the bidirectional data
-TEXT=./iwslt14.tokenized.de-en
+TEXT=iwslt14.tokenized.de-en
 fairseq-preprocess --source-lang src --target-lang tgt \
     --trainpref $TEXT/train --validpref $TEXT/valid --testpref $TEXT/test \
     --destdir data-bin/iwslt14.tokenized.bidirection.de-en \
     --srcdict data-bin/iwslt14.tokenized.de-en/dict.en.txt --tgtdict data-bin/iwslt14.tokenized.de-en/dict.de.txt --workers 20
 ```
 
-Pretrain a Transformer translation model over the bidirectional data:
+### Training
+
+Pretrain the Transformer translation model over the bidirectional data:
 ```
 EXP=iwslt14_de_en_bid_simcut_alpha3_p005
 DATA=data-bin/iwslt14.tokenized.bidirection.de-en
@@ -71,7 +75,7 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train $DATA \
     1>log/$EXP/log.out 2>log/$EXP/log.err
 ```
 
-Finetune a Transformer translation model over the unidirectional data:
+Finetune the Transformer translation model over the unidirectional data:
 ```
 EXP=iwslt14_de_en_simcut_alpha3_p005
 DATA=data-bin/iwslt14.tokenized.de-en
@@ -90,6 +94,8 @@ CUDA_VISIBLE_DEVICES=0 fairseq-train $DATA \
     --max-tokens 4096 --fp16 --no-epoch-checkpoints --save-dir checkpoint/$EXP \
     1>log/$EXP/log.out 2>log/$EXP/log.err
 ```
+
+### Evaluation
 
 Evaluate our trained model:
 ```
@@ -115,6 +121,15 @@ BLEU=$MOSES/scripts/generic/multi-bleu.perl
 perl $BLEU $REF.detok < $FILE.detok
 ```
 
+### Result
+
+Please note that the experimental result is sightly different from that in the paper. 
+
+| Method | BLEU |
+| --- | --- |
+| Transformer | 34.89 |
+| SimCut | 37.95 |
+| Bi-SimCut | 38.42 |
 
 ## Citation
 
