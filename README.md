@@ -112,13 +112,13 @@ CUDA_VISIBLE_DEVICES=0 fairseq-generate $DATA --path $CKPT \
 
 FILE=evaluation/$EXP
 
-cat $FILE | grep -P "^D" | sort -V | cut -f 3- > $FILE.detok
-sed -r 's/(@@ )|(@@ ?$)//g' $REF > $REF.detok
+cat $FILE | grep -P "^D" | sort -V | cut -f 3- > $FILE.tok
+sed -r 's/(@@ )|(@@ ?$)//g' $REF > $REF.tok
 
 MOSES=mosesdecoder
 BLEU=$MOSES/scripts/generic/multi-bleu.perl
 
-perl $BLEU $REF.detok < $FILE.detok
+perl $BLEU $REF.tok < $FILE.tok
 ```
 
 ### Result
