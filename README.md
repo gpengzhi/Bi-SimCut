@@ -107,7 +107,7 @@ CKPT=checkpoint/$EXP/checkpoint_best.pt
 mkdir -p evaluation
 
 CUDA_VISIBLE_DEVICES=0 fairseq-generate $DATA --path $CKPT \
-    --gen-subset test --beam 5 --lenpen 1 --max-tokens 8192 --remove-bpe
+    --gen-subset test --beam 5 --lenpen 1 --max-tokens 8192 --remove-bpe \
     > evaluation/$EXP
 
 FILE=evaluation/$EXP
