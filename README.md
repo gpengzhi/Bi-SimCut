@@ -1,6 +1,6 @@
 # Bi-SimCut: A Simple Strategy for Boosting Neural Machine Translation
 
-This repository contains the PyTorch implementation (**Unofficial**) for our NAACL 2022 main conference paper "[Bi-SimCut: A Simple Strategy for Boosting Neural Machine Translation](https://aclanthology.org/2022.naacl-main.289/)". Please check [here]() for the PaddlePaddle implementation (**Official**) for our work.
+This repository contains the PyTorch implementation (**Unofficial**) for our NAACL 2022 main conference paper "[Bi-SimCut: A Simple Strategy for Boosting Neural Machine Translation](https://aclanthology.org/2022.naacl-main.289/)".
 
 ## Requirements and Installation
 
